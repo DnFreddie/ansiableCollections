@@ -1,5 +1,5 @@
 ---
-- name: Check if Podman =>4.4 and not run as root 
+- name: Check if Podman =>4.4 and not run as root
   block:
     - name: Gather the package facts
       ansible.builtin.package_facts:
@@ -12,14 +12,14 @@
           - "ansible_facts.packages['podman'] | length > 0"
           - "ansible_facts.packages['podman'][0].version is version('4.4', '>=')"
         msg: >
-          Podman must be installed and be version >= 4.4, but the current version is 
+          Podman must be installed and be version >= 4.4, but the current version is
           {{ ansible_facts.packages['podman'][0].version | default('not installed') }}
 
-    - name: Asert not runnig as root 
+    - name: Asert not runnig as root
       ansible.builtin.assert:
         that:
           - "ansible_user_id != 'root'"
-        msg: This playbook is for the user contaienrs only 
+        msg: This playbook is for the user contaienrs only
 
 - name: Confirm container installation
   ansible.builtin.debug:
@@ -31,16 +31,6 @@
   loop: "{{ containers }}"
   loop_control:
     loop_var: container
-
-- name: Enable Lingering
-  tags: test
-  ansible.builtin.lineinfile:
-    path: /etc/systemd/logind.conf
-    backrefs: yes
-    regexp: '^(KillExcludeUsers=(?!.*\b{{ ansible_user_id }}\b)(.*))$'
-    line: '\g<1> {{ ansible_user_id }}'
-    create: yes
-  when: linger | bool
 
 
 - name: Reload systemd daemon once

@@ -1,6 +1,6 @@
 systemd_containers
 =========
-Run exisitg podman images as systemd user serivces 
+Run exisitg podman images as systemd user serivces
 with quadlet
 
 Requirements
@@ -11,11 +11,9 @@ podman >= 4.4
 Role Variables
 --------------
 ```yaml
-# Should the user  linger
-linger: false
 # Base directory for container configuration
 container_dir: Containers  # ~/Containers
-# This is an array of the containers u want to create 
+# This is an array of the containers u want to create
 containers:
   - name: linkding
     env_file: "env.j2"  # Jinja2 template for environment variables
@@ -51,4 +49,4 @@ MIT
 
 Author Information
 ------------------
-github.com/Dnfreddie 
+github.com/Dnfreddie
