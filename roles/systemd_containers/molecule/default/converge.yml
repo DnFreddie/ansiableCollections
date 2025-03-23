@@ -1,0 +1,7 @@
+- name: Converge
+  hosts: all
+  become_user: vagrant
+  tasks:
+  roles:
+    - dnfreddie.sysops.systemd_containers
+

@@ -3,6 +3,7 @@ systemd_containers
 Run exisitg podman images as systemd user serivces
 with quadlet
 
+
 Requirements
 ------------
 podman >= 4.4
@@ -40,6 +41,14 @@ containers:
         create: false
     exec: serve --dev-addr=0.0.0.0:8000
 ```
+
+Testing
+-------
+You can test this playbook using **Molecule**. The default provider is **Vagrant** with the **VirtualBox** provisioner.
+Ensure you have the following installed:
+- Molecule
+- Vagrant
+- VirtualBox
 
 
 

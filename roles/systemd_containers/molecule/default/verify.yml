@@ -1,0 +1,112 @@
+- name: Verify
+  hosts: all
+  tasks:
+    - name: Include default vars
+      ansible.builtin.include_vars:
+        dir: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/"
+        extensions: [yml]
+
+    - name: Verify container directories exist
+      ansible.builtin.stat:
+        path: "{{ ansible_env['HOME'] }}/{{ container_dir }}/{{ item.name }}"
+      register: container_dir_stat
+      loop: "{{ containers }}"
+      no_log: true
+
+    - name: Assert container directory exists
+      no_log: true
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.isdir
+        fail_msg: "Container directory '{{ item.item.name }}' does not exist or is not a directory."
+      loop: "{{ container_dir_stat.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: Verify systemd containers directory exists
+      ansible.builtin.stat:
+        path: "{{ ansible_env['HOME'] }}/.config/containers/systemd"
+      register: systemd_containers_stat
+      no_log: true
+
+    - name: Assert systemd containers directory exists
+      ansible.builtin.assert:
+        that:
+          - systemd_containers_stat.stat.exists
+          - systemd_containers_stat.stat.isdir
+        fail_msg: "Systemd containers directory does not exist or is not a directory."
+      no_log: true
+
+    - name: Verify env file exists (if defined)
+      ansible.builtin.stat:
+        path: "{{ ansible_env['HOME'] }}/{{ container_dir }}/{{ item.name }}/.env"
+      register: env_file_stat
+      no_log: true
+      when: item.env_file is defined
+      loop: "{{ containers }}"
+
+    - name: Assert env file exists (if defined)
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+        fail_msg: "Env file for '{{ item.item.name }}' does not exist."
+      when: item.item.env_file is defined
+      loop: "{{ env_file_stat.results }}"
+      no_log: true
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: Verify container definition file exists
+      ansible.builtin.stat:
+        path: "{{ ansible_env['HOME'] }}/{{ container_dir }}/{{ item.name }}/{{ item.name }}.container"
+      register: container_file_stat
+      no_log: true
+      loop: "{{ containers }}"
+
+    - name: Assert container definition file exists
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+        fail_msg: "Container definition file for '{{ item.item.name }}' does not exist."
+      loop: "{{ container_file_stat.results }}"
+      no_log: true
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: Verify container definition link exists
+      ansible.builtin.stat:
+        path: "{{ ansible_env['HOME'] }}/.config/containers/systemd/{{ item.name }}.container"
+      register: container_link_stat
+      no_log: true
+      loop: "{{ containers }}"
+
+    - name: Assert container definition link exists
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.islnk
+        fail_msg: "Container definition link for '{{ item.item.name }}' does not exist or is not a symbolic link."
+      loop: "{{ container_link_stat.results }}"
+      no_log: true
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: Verify container services are running
+      ansible.builtin.systemd:
+        name: "{{ item.name }}"
+        scope: user
+      register: service_status
+      no_log: true
+      loop: "{{ containers }}"
+
+    - name: Assert container services are running
+      ansible.builtin.assert:
+        that:
+          - item.status.ActiveState == 'active'
+          - item.status.SubState == 'running'
+        fail_msg: "Service '{{ item.item.name }}' is not running."
+      loop: "{{ service_status.results }}"
+      no_log: true
+      loop_control:
+        label: "{{ item.item.name }}"
